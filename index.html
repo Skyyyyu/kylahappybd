@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Happy Birthday!</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body { background: linear-gradient(135deg, #ff3d8b, #8a5cff 55%, #19c3b1) fixed; font-family: "Segoe UI", system-ui, sans-serif; overflow-x: hidden; }
+    #confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+    main { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 16px; box-sizing: border-box; }
+    #start { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    #start .title { color: #ffd23f; font-size: clamp(2rem, 7vw, 4rem); font-weight: 800; margin: 0 0 24px; text-shadow: 3px 3px 0 rgba(0,0,0,.25); }
+    #openBtn { background: #ffc107; color: #000; border: 0; border-radius: 999px; padding: 16px 48px; font-weight: 700; font-size: clamp(1.3rem, 5vw, 2rem); cursor: pointer; }
+    .d-none { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <canvas id="confetti"></canvas>
+
+  <main class="container">
+
+    <!-- Step 1: only the button is visible -->
+    <section id="start">
+      <h1 class="title">🎁 You have a surprise!</h1>
+      <button id="openBtn" class="btn btn-warning btn-lg rounded-pill px-5 py-3 fw-bold pulse">Click here</button>
+    </section>
+
+    <!-- Step 2: hidden until the button is clicked -->
+    <section id="reveal" class="d-none w-100">
+      <h1 class="display-3 fw-bold title mb-2">🎉 Happy Birthday, NAME! 🎂</h1>
+      <p class="lead text-white mb-4">We made this just for you!</p>
+
+      <div class="col-12 col-md-10 col-lg-8 mx-auto">
+        <div class="ratio ratio-16x9 video-wrap shadow-lg">
+          <iframe id="yt" title="Birthday surprise"
+                  allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                  allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </div>
+      </div>
+
+      <p class="mt-4 text-white-50">With love, from all of us ❤️</p>
+    </section>
+
+  </main>
+
+  <script>
+    /* ====== PUT YOUR YOUTUBE LINK HERE ====== */
+    const YOUTUBE_LINK = 'https://www.youtube.com/watch?v=a5FhyTLG-X0';
+    /* ======================================== */
+
+    function getId(url) {
+      const m = url.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/);
+      return m ? m[1] : null;
+    }
+
+    /* ---------- Confetti that falls like snow ---------- */
+    const cv = document.getElementById('confetti');
+    const ctx = cv.getContext('2d');
+    const colors = ['#ff3d8b', '#ffd23f', '#19c3b1', '#ffffff', '#8a5cff', '#ff8a3d'];
+    let pieces = [], boost = 1;
+
+    function resize() { cv.width = innerWidth; cv.height = innerHeight; }
+    addEventListener('resize', resize); resize();
+
+    function makePiece(atTop = true) {
+      return {
+        x: Math.random() * cv.width,
+        y: atTop ? -20 : Math.random() * cv.height,
+        w: 6 + Math.random() * 8, h: 4 + Math.random() * 6,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        speed: 1 + Math.random() * 2.5,
+        drift: (Math.random() - 0.5) * 1.2,
+        sway: Math.random() * Math.PI * 2,
+        rot: Math.random() * Math.PI * 2,
+        spin: (Math.random() - 0.5) * 0.15
+      };
+    }
+
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const count = reduce ? 0 : Math.min(160, Math.floor(innerWidth / 8));
+    for (let i = 0; i < count; i++) pieces.push(makePiece(false));
+
+    (function draw() {
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      for (const p of pieces) {
+        p.sway += 0.03; p.y += p.speed * boost;
+        p.x += p.drift + Math.sin(p.sway) * 0.8; p.rot += p.spin;
+        if (p.y > cv.height + 20) Object.assign(p, makePiece(true));
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+        ctx.fillStyle = p.color; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      }
+      requestAnimationFrame(draw);
+    })();
+
+    /* ---------- Click here -> show YouTube video ---------- */
+    document.getElementById('openBtn').addEventListener('click', () => {
+      const id = getId(YOUTUBE_LINK);
+      document.getElementById('start').classList.add('d-none');
+      document.getElementById('reveal').classList.remove('d-none');
+
+      if (id) {
+        document.getElementById('yt').src =
+          'https://www.youtube.com/embed/' + id + '?autoplay=1&rel=0&playsinline=1';
+      }
+
+      if (!reduce) {
+        for (let i = 0; i < 120; i++) pieces.push(makePiece(false));
+        boost = 3;
+        setTimeout(() => { boost = 1; pieces.length = Math.min(pieces.length, count); }, 3000);
+      }
+    });
+  </script>
+</body>
+</html>
